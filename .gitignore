@@ -1,0 +1,33 @@
+node_modules/
+frontend/
+
+# Python environment folders
+myenv/
+env/
+venv/
+__pycache__/
+
+# Environment variables
+.env
+
+# Python cache and build files
+*.pyc
+*.pyo
+*.pyd
+*.log
+*.sqlite3
+*.db
+
+# IDE/editor settings
+.vscode/
+.idea/
+*.code-workspace
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Dependency / packaging
+dist/
+build/
+*.egg-info/
