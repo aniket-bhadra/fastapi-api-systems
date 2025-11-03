@@ -2,7 +2,96 @@
 
 ## Why FastAPI Needs a Separate Server
 
-**Node.js** and **Django** come with built-in web servers, so you just code and start the server. But **FastAPI** (like PHP with XAMPP) requires installing a separate server — here we use **Uvicorn**.
+### Web Server Architecture: 3-Layer System
+
+**Layer 1: Server (Network/HTTP Handler)**
+- Handles raw HTTP connections, manages TCP/IP, parses HTTP protocol
+- Examples: Uvicorn, Gunicorn, Nginx
+
+**Layer 2: Interface/Gateway (Converter)**
+- Converts between HTTP and Python objects (standardized format)
+- Standards: WSGI (sync) or ASGI (async) — just specifications, not software you install
+- Both server and framework follow this standard to communicate
+
+**Layer 3: Application (Your Code)**
+- Business logic, routing, database, validation
+- Examples: Django, FastAPI
+
+**How it works:**
+When HTTP request comes → Server passes it to Interface → Interface converts HTTP to Python dict and calls Application as a function with that dict as argument → Application processes and returns response → Interface converts response back to HTTP → Server sends to user
+
+**Why separate layers?**
+- Swap servers without changing code
+- Use same server for different frameworks
+- Scale and optimize each layer independently
+
+
+**Django:**
+- WSGI/ASGI passes request to application as dictionary (environ for WSGI, scope for ASGI)
+- URL routing directs to appropriate view function  
+- View function processes and returns HttpResponse object
+- WSGI/ASGI converts back to HTTP response
+
+**FastAPI:**
+- ASGI passes request to application as dictionary (scope)
+- FastAPI converts request data to Python types using type hints
+- Router calls the appropriate path operation function
+- Function returns Python objects - FastAPI automatically serializes to JSON using Pydantic
+
+So no manual conversion like `req.json()` in Node.js or `JsonResponse` in Django. Just return Python object from each function → FastAPI automatically converts to JSON & hands over this JSON to ASGI → ASGI converts to HTTP response and hands over to server → server sends to user
+
+### Framework Comparison
+
+**Node.js:**
+- Runtime environment with built-in `http` module
+- Creates server directly: `http.createServer(...).listen(3000)`
+- **No separate server layer** — server and application run together
+- Express.js wraps this built-in server
+- Next.js inherits Node's HTTP server capabilities
+
+**Django:**
+- Comes with development server: `python manage.py runserver`
+- Production: Install Gunicorn (WSGI) or Uvicorn/Daphne (ASGI)
+- **Uses separate server layer** (WSGI/ASGI architecture)
+- Supports both sync (default) and async (since v3.1)
+
+**FastAPI:**
+- Lightweight, no built-in server
+- Development & Production: Install ASGI server (Uvicorn, Hypercorn)
+- **Uses separate server layer** (ASGI architecture)
+- Async-first (designed for async from ground up)
+
+**Key takeaway:** 
+- Node.js/Express/Next.js have **integrated server** (no separate layer)
+- Django and FastAPI use **separate server layer** architecture (WSGI/ASGI). Django includes a convenience development server; FastAPI requires you to choose your own ASGI server from the start. Both need production servers installed separately.
+
+---
+
+### Synchronous vs Asynchronous
+
+**Synchronous (Blocking):**
+```python
+def get_data(request):
+    user = fetch_from_database()     # Waits 2 sec - does nothing
+    weather = fetch_from_api()       # Waits 3 sec - does nothing
+    return JsonResponse({"user": user, "weather": weather})
+# Total: 5 seconds, cannot handle other requests while waiting
+```
+
+**Asynchronous (Non-blocking):**
+```python
+async def get_data(request):
+    user = await fetch_from_database()     # Waits 2 sec - handles other requests
+    weather = await fetch_from_api()       # Waits 3 sec - handles other requests
+    return {"user": user, "weather": weather}
+# Total: 5 seconds, BUT handles 100s of other requests during waits
+```
+
+**Difference:**
+- **Sync:** 1 request at a time, waits idle
+- **Async:** Many requests at once, no idle waiting
+
+**Why FastAPI is faster:** Built for async from day one (optimized for I/O-heavy operations like database, API calls, file operations). Django added async support later as a retrofit. FastAPI handles thousands of requests without blocking.
 
 ---
 
@@ -48,13 +137,12 @@ python -m venv env
 env\Scripts\activate
 pip install -r requirements.txt
 ```
-
 ---
 
 ## Client-Server Communication: The Basics
 
 ### Server Types
-- **File Server** → sends files via FTP/SFTP
+- **File Server** → sends files in their original format (PDF, images, videos, etc.) via FTP/FTPS
 - **Web Server** → sends data in HTML/JSON via HTTP/HTTPS
 - **Mail Server** → handles emails
 
@@ -74,13 +162,7 @@ We send the **current state of data** between client and server in a **represent
 - We need a **protocol** (HTTP/HTTPS) for standardized communication
 - HTTP provides **clear direction** on how to perform CRUD operations
 
-### HTTP Methods (Standard CRUD)
-- **GET** → Read
-- **POST** → Create
-- **PUT** → Update
-- **DELETE** → Delete
-
-This standardization ensures **unified communication** regardless of language or version.
+This standardization ensures **unified communication** regardless of language or version. ex - GET → Read, POST → Create,PUT → Update
 
 ---
 
@@ -89,7 +171,6 @@ This standardization ensures **unified communication** regardless of language or
 ```bash
 uvicorn main:app --reload
 ```
-
 - `main` = your Python file (main.py)
 - `app` = FastAPI instance variable
 - `--reload` = auto-restart on code changes
@@ -117,5 +198,5 @@ When you call `Product(...)`, Pydantic's **auto-generated `__init__`** runs:
 - **FastAPI comes with Swagger built-in** — no configuration needed!
 
 **Why use Swagger over Postman?**
-- Swagger provides **interactive documentation** — anyone can test the API directly from the docs without installing anything
+- Swagger provides **more interactive documentation** — anyone can test the API directly from the docs without installing anything
 - Postman requires installation and manual request setup
