@@ -343,3 +343,33 @@ The running process exists in RAM with its own state. If we want to see changes 
 ### type hints
 So in case of Python, type hints are ignored at compile and runtime — they're used to tell what developers expect and for IDE support, but not enforced. In case of TypeScript, it enforces at compile time.
 But in case of FastAPI, it uses Pydantic which reads type hints and enforces validation at runtime, so in that case it strictly checks and throws error if it gets something which is not defined.
+
+### ORM
+When we define a class in JS/Python that maps to a table/collection:
+- Class name maps to table/collection name
+- The type of each field inside the class maps to each column type of that table (or field type in a document)
+- Each instance (object) of that class maps to each row of that table (or document in a collection)
+
+So we're connecting objects and relations (tables) by mapping everything in that class to that table/collection — that's why it's called Object-Relational Mapper (ORM) for SQL databases, or Object-Document Mapper (ODM) for NoSQL document databases like MongoDB.
+
+We need this because when working with Python/JS, we'd have to manually convert class objects to SQL queries (or MongoDB queries), which is cumbersome, very error-prone, complex, and difficult to maintain since two different languages exist in one file. That's why these tools exist — they give us functions we can call, and behind the scenes those queries are generated and executed. We just write code in Python/JS. This is why ORMs and ODMs exist.
+
+So these ODM/ORM tools let us:
+- Define models (classes) for collections/tables
+- Validate data automatically
+- Query and update documents/rows using Python/JS syntax instead of raw MongoDB/SQL queries
+
+To work with FastAPI and PostgreSQL, we need a PostgreSQL driver and optionally SQLAlchemy. SQLAlchemy is an ORM, which is optional — we can communicate with PostgreSQL directly using Python and the driver alone, but it becomes complex, cumbersome, and harder to manage. The driver, however, is mandatory. It functions as the communication layer through which we send SQL queries to the actual PostgreSQL server — similar to how pgAdmin or the psql CLI communicates with PostgreSQL.
+
+The driver itself isn't the DBMS; the PostgreSQL server is the DBMS that stores, manages, and processes data.
+
+- **psycopg2** (sync) / **asyncpg** (async) → drivers that communicate with the PostgreSQL server
+- **SQLAlchemy** → ORM layer built on top of the driver. Since the driver is the only medium to communicate with the server, SQLAlchemy (or any ORM/ODM) is built on top of these drivers so that communication happens successfully
+- **pgAdmin** / **psql** → client tools that also communicate with the PostgreSQL server using a driver
+
+psql and pgAdmin are tools that provide a command-line or graphical interface for interacting with PostgreSQL server. Behind the scenes, they use database drivers (such as libpq for psql) to handle the actual communication with the PostgreSQL database server.
+
+Mongoose (NoSQL - MongoDB ODM) → works only with JavaScript/TypeScript (Node.js).
+Mongoengine or Motor (NoSQL - MongoDB ODM) → works only with Python.
+Prisma (SQL/NoSQL ORM) → works only with JavaScript/TypeScript.
+SQLAlchemy (SQL ORM) → works only with Python.
