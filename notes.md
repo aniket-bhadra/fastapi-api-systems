@@ -373,3 +373,74 @@ Mongoose (NoSQL - MongoDB ODM) → works only with JavaScript/TypeScript (Node.j
 Mongoengine or Motor (NoSQL - MongoDB ODM) → works only with Python.
 Prisma (SQL/NoSQL ORM) → works only with JavaScript/TypeScript.
 SQLAlchemy (SQL ORM) → works only with Python.
+
+### autocommit && autoflush 
+
+session = sessionLocal()
+
+user1 = User(name="Alice")
+user2 = User(name="Bob")
+user3 = User(name="Charlie")
+
+session.add(user1)
+session.add(user2)
+session.add(user3)
+
+# NOW you want to query: How many users are in the database?
+
+**autocommit=False && autoflush=True:** Changes are temporarily sent to DB during queries (visible only in this session, count=110), but not permanent until `commit()` — other sessions see count=100.
+
+**autocommit=False && autoflush=False:** Changes stay in Python memory, never touch DB until `commit()` (even this session sees count=100) — gives full control, fewer DB calls, better performance.
+
+**autocommit=True && autoflush=True:** Changes are immediately flushed and permanently committed to DB automatically (all sessions see count=110) — no control, no rollback, everything saves instantly.
+
+```python
+session = sessionLocal()
+
+user1 = User(name="Alice")
+user2 = User(name="Bob")
+user3 = User(name="Charlie")
+
+session.add(user1)
+session.add(user2)
+session.add(user3)
+
+# NOW you want to query: How many users are in the database?
+count = session.query(User).count()
+print(f"Count: {count}")
+```
+
+---
+
+### **Case 1: autocommit=False, autoflush=True**
+```python
+What happens:
+1. session.add(user1) → Stays in memory
+2. session.add(user2) → Stays in memory
+3. session.add(user3) → Stays in memory
+4. session.query(User).count() → ⚠️ AUTOFLUSH triggers!
+   - SQLAlchemy sends INSERT for Alice, Bob, Charlie to database (temporary, in transaction)
+   - Then runs the COUNT query
+   - Count includes Alice, Bob, Charlie
+5. No commit() yet → Changes are NOT permanent, other sessions can't see them
+
+Result: Count = (original users + 3)
+Database calls: 3 INSERT queries + 1 COUNT query = 4 database operations
+```
+
+---
+
+### **Case 2: autocommit=False, autoflush=False**
+```python
+What happens:
+1. session.add(user1) → Stays in memory
+2. session.add(user2) → Stays in memory
+3. session.add(user3) → Stays in memory
+4. session.query(User).count() → No autoflush!
+   - Runs COUNT query directly without sending Alice, Bob, Charlie
+   - Count does NOT include Alice, Bob, Charlie (they're still only in Python memory)
+5. No commit() yet → Changes are NOT in database at all
+
+Result: Count = (original users only, NO new users counted)
+Database calls: 1 COUNT query = 1 database operation
+```
