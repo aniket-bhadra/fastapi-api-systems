@@ -1,8 +1,14 @@
 from fastapi import FastAPI
 from models import Product
+from database import sessionLocal, engine
+import database_models
+
 
 app = FastAPI()
 
+# create_all() is smart — it checks if the table already exists in the database. If the table exists, it does nothing. If the table doesn't exist, it creates it. So restarting the server won't duplicate tables.
+
+database_models.Base.metadata.create_all(bind=engine)
 
 @app.get("/")
 def greet():
@@ -23,6 +29,10 @@ products = [
 
 @app.get("/products")
 def get_all_products():
+    # db connection
+    db = sessionLocal()
+    # db query
+    db.query()
     return products
 
 

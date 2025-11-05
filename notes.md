@@ -444,3 +444,17 @@ What happens:
 Result: Count = (original users only, NO new users counted)
 Database calls: 1 COUNT query = 1 database operation
 ```
+
+### database_models.Base.metadata.create_all(bind=engine)
+
+create_all() is smart — it checks if the table already exists in the database. If the table exists, it does nothing. If the table doesn't exist, it creates it. So restarting the server won't duplicate tables.
+
+Base is a base class provided by SQLAlchemy. When you create your model classes (like Product) and inherit from Base, SQLAlchemy automatically tracks all the metadata about that class — table name, column names, column types, primary keys, etc.
+
+so,
+Here's what's happening:
+
+Base.metadata contains all the information about ALL the tables (models) you defined that inherit from Base
+create_all(bind=engine) takes all that metadata and generates the SQL CREATE TABLE statements
+It executes those statements on the database (using the engine) to create the actual tables
+But it only creates tables that don't already exist
