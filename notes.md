@@ -561,3 +561,55 @@ FastAPI calls `get_db()`, which runs until `yield db` and pauses. FastAPI inject
 
 **Why use dependency injection over manual function calls?**
 If we manually call `get_db()`, we'd have to remember to use `next()` since the function execution is paused after `yield`. But with dependency injection, all of this is handled automatically by FastAPI — no extra code, no manual `next()` calls, nothing. We just declare the dependency and FastAPI handles everything on behalf of us. This way we can reuse the same session management multiple times, and managing sessions becomes easy and consistent across all routes.
+
+
+### If the client is sending JSON (which is already key-value pairs like a dictionary), why can't we directly unpack that JSON response? Why do we need the conversion using model_dump()? Because model_dump() converts to a dictionary, but we're already getting a dictionary as JSON, right?
+
+**Answer:**
+
+Whatever parameter type we provide, FastAPI checks if the incoming request has the same data type. If yes, it allows it; if not, it tries to convert it to whichever type is mentioned. 
+
+When we add a product, the client sends JSON: `{"id": 1, "name": "Phone", "price": 699.99, ...}`. FastAPI sees that the parameter type is a Pydantic model, so FastAPI converts this JSON to a Pydantic object: `Product(id=1, name="Phone", price=699.99, ...)` — NOT a dictionary. We cannot unpack an object directly, so `model_dump()` converts this Pydantic object → dictionary, then `**` unpacks the dictionary into `key=value` arguments. After that, SQLAlchemy's `Product()` constructor accepts those keyword arguments like this:
+```python
+database_models.Product(id=1, name="Phone", price=699.99, ...)
+```
+
+This creates a SQLAlchemy model instance that `db.add()` can store in the database.
+
+---
+
+**What if we use SQLAlchemy model as the parameter type?**
+```python
+@app.post("/product")
+def add_product(product: database_models.Product, db: Session = Depends(get_db)):
+    db.add(product)
+```
+
+**Will it work?** No, because SQLAlchemy models cannot be used to validate request/response data. When a request comes in as JSON, FastAPI sees it doesn't match the data type and tries to convert it, but it cannot convert it because FastAPI only converts Pydantic data types — it doesn't know about SQLAlchemy models. So it will throw an error.
+
+---
+
+**Why we need both models:**
+
+- **Pydantic models** (`Product` from `models.py`) → for FastAPI request/response validation and conversion
+- **SQLAlchemy models** (`database_models.Product`) → for database operations
+
+---
+
+**Remember:**
+
+If there are predefined types like `int`, `float`, `str`, then FastAPI can validate the request and try to convert it automatically if the request data type doesn't match. But if there is a custom type, we must define types with Pydantic, because for custom type checking, validation, and conversion, FastAPI only supports Pydantic. So we must define a Pydantic model and use it as the parameter type so that FastAPI can validate and convert the incoming JSON.
+
+Then we have to convert the Pydantic type to SQLAlchemy model type because the Pydantic type cannot be stored in the database directly. SQLAlchemy, which is the ORM used to store data, doesn't understand Pydantic types — it only understands its own types. So we have to convert that Pydantic type to SQLAlchemy model type:
+```python
+db.add(database_models.Product(**product.model_dump()))
+```
+
+Here:
+- `product.model_dump()` converts the Pydantic object to a dictionary
+- `**` unpacks those key-value pairs and passes them to `database_models.Product()` as arguments
+- `database_models.Product()` creates a SQLAlchemy model instance that we can add to the database
+
+So we need both:
+- **Pydantic models** → for FastAPI request/response validation
+- **SQLAlchemy models** → for database operations
