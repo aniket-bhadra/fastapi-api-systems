@@ -613,3 +613,97 @@ Here:
 So we need both:
 - **Pydantic models** → for FastAPI request/response validation
 - **SQLAlchemy models** → for database operations
+
+### FastAPI's Parameter Detection
+- If a parameter name appears in the route path with {}, it's a path parameter.
+
+```python
+@app.put("/product/{id}")  # ← id is in the path
+def update_product(id: int, ...):
+    # FastAPI knows: id comes from URL path
+```
+
+- If a parameter is NOT in the path and has a simple type (int, str, float, bool), it's a query parameter.
+
+```python
+@app.put("/product")  # ← id is NOT in the path
+def update_product(id: int, ...):
+    # FastAPI knows: id comes from query string
+```
+
+- If a parameter is a Pydantic model or marked with Body(), it comes from the request body.
+```python
+@app.put("/product")
+def update_product(id: int, product: Product, ...):
+    # FastAPI knows:
+    # - product = request body (Pydantic model)
+```
+
+- If a parameter has = Depends(...), it's a dependency injection.
+```python
+def update_product(id: int, product: Product, db: Session = Depends(get_db)):
+    # FastAPI knows:
+    # - db = dependency (injected by FastAPI)
+```
+### now what if we wanted make sure this parameter must come from body?
+method 1: Use Body() for simple types
+```python
+@app.put("/product")
+def update_product(id: int = Body(), product: Product)
+```
+
+```js
+fetch(`/product`, {
+    method: 'PUT',
+    body: JSON.stringify({
+        id: 5,  // ← id in body now
+        name: "Phone", 
+        price: 699.99
+    })
+})
+```
+Method 2: Include it in your Pydantic model (Best Practice)
+```python
+class Product(BaseModel):
+    id: int
+    name: str
+    description: str
+    price: float
+    quantity: int
+
+def update_product(product_data: Product)
+```
+
+```js
+fetch(`/product`, {
+    method: 'PUT',
+    body: JSON.stringify({
+        id: 5,
+        name: "Phone",
+        price: 699.99,
+        // ... all fields
+    })
+})
+```
+
+method 3 wrapper
+```python
+@app.put("/product")
+def update_product(product: Product = Body(embed=True))
+```
+
+```js
+fetch(`/product`, {
+    method: 'PUT',
+    body: JSON.stringify({
+        product: {  // ← Notice the wrapper
+            id: 5,
+            name: "Phone",
+            price: 699.99
+        }
+    })
+})
+```
+If we use Body(embed=True), Pydantic model comes from body with a wrapper key (the wrapper key name = parameter name)
+
+FastAPI is smart — it looks at the route definition and parameter types to automatically figure out where each parameter should come from. No manual configuration needed!
