@@ -5,15 +5,18 @@
 ### Web Server Architecture: 3-Layer System
 
 **Layer 1: Server (Network/HTTP Handler)**
+
 - Handles raw HTTP connections, manages TCP/IP, parses HTTP protocol
 - Examples: Uvicorn, Gunicorn, Nginx
 
 **Layer 2: Interface/Gateway (Converter)**
+
 - Converts between HTTP and Python objects (standardized format)
 - Standards: WSGI (sync) or ASGI (async) — just specifications, not software you install
 - Both server and framework follow this standard to communicate
 
 **Layer 3: Application (Your Code)**
+
 - Business logic, routing, database, validation
 - Examples: Django, FastAPI
 
@@ -21,11 +24,12 @@
 When HTTP request comes → Server passes it to Interface → Interface converts HTTP to Python dict and calls Application as a function with that dict as argument → Application processes and returns response → Interface converts response back to HTTP → Server sends to user
 
 **Why separate layers?**
+
 - Swap servers without changing code
 - Use same server for different frameworks
 - Scale and optimize each layer independently
 
-*but*
+_but_
 
 - **Server** = Physical software ✅ Ex: Uvicorn, Gunicorn
 - **Application** = Physical software ✅ Ex: FastAPI, Django
@@ -34,18 +38,21 @@ When HTTP request comes → Server passes it to Interface → Interface converts
 **Analogy:** Phone and charger both follow USB-C standard — rules about pin size, voltage, data transfer. USB-C itself isn't a physical thing; it's a specification that phone manufacturers and charger manufacturers implement.
 
 **Similarly, ASGI/WSGI is a specification:**
+
 - **Uvicorn** has ASGI implementation built-in → knows how to create `scope` dictionary and call app
 - **FastAPI** has ASGI implementation built-in → knows how to receive `scope` dictionary and respond
 
 **Result:** ASGI/WSGI rules are built INTO both server and framework, allowing them to communicate in a standardized format.
 
 **Django:**
+
 - WSGI/ASGI passes request to application as dictionary (environ for WSGI, scope for ASGI)
-- URL routing directs to appropriate view function  
+- URL routing directs to appropriate view function
 - View function processes and returns HttpResponse object
 - WSGI/ASGI converts back to HTTP response
 
 **FastAPI:**
+
 - ASGI passes request to application as dictionary (scope)
 - FastAPI converts request data to Python types using type hints
 - Router calls the appropriate path operation function
@@ -58,6 +65,7 @@ but ASGI gives a Python dictionary, so why does FastAPI need to "convert request
 ## What Actually Happens
 
 **Step 1: ASGI hands over dictionary**
+
 ```python
 # ASGI gives FastAPI something like this:
 scope = {
@@ -73,6 +81,7 @@ scope = {
 **Step 2: FastAPI converts using type hints**
 
 When you write:
+
 ```python
 @app.post("/users")
 async def create_user(email: str, age: int):  # Type hints here
@@ -101,7 +110,7 @@ async def create_user(email: str, age: int):  # You specify: age should be INT
     # 3. Converts "25" (string) → 25 (integer)
     # 4. Validates it's a valid integer
     # 5. Passes to your function
-    
+
     print(type(age))  # <class 'int'> - already converted!
     return {"email": email, "age": age}
 ```
@@ -109,6 +118,7 @@ async def create_user(email: str, age: int):  # You specify: age should be INT
 ## Without FastAPI (Manual Work)
 
 In Node.js or plain Python, you'd do:
+
 ```python
 def create_user(request_dict):
     body = json.loads(request_dict['body'])  # Manual parse
@@ -132,6 +142,7 @@ async def create_user(email: str, age: int):
 ### Framework Comparison
 
 **Node.js:**
+
 - Runtime environment with built-in `http` module
 - Creates server directly: `http.createServer(...).listen(3000)`
 - **No separate server layer** — server and application run together
@@ -139,18 +150,21 @@ async def create_user(email: str, age: int):
 - Next.js inherits Node's HTTP server capabilities
 
 **Django:**
+
 - Comes with development server: `python manage.py runserver`
 - Production: Install Gunicorn (WSGI) or Uvicorn/Daphne (ASGI)
 - **Uses separate server layer** (WSGI/ASGI architecture)
 - Supports both sync (default) and async (since v3.1)
 
 **FastAPI:**
+
 - Lightweight, no built-in server
 - Development & Production: Install ASGI server (Uvicorn, Hypercorn)
 - **Uses separate server layer** (ASGI architecture)
 - Async-first (designed for async from ground up)
 
-**Key takeaway:** 
+**Key takeaway:**
+
 - Node.js/Express/Next.js have **integrated server** (no separate layer)
 - Django and FastAPI use **separate server layer** architecture (WSGI/ASGI). Django includes a convenience development server; FastAPI requires you to choose your own ASGI server from the start. Both need production servers installed separately.
 
@@ -159,6 +173,7 @@ async def create_user(email: str, age: int):
 ### Synchronous vs Asynchronous
 
 **Synchronous (Blocking):**
+
 ```python
 def get_data(request):
     user = fetch_from_database()     # Waits 2 sec - does nothing
@@ -168,6 +183,7 @@ def get_data(request):
 ```
 
 **Asynchronous (Non-blocking):**
+
 ```python
 async def get_data(request):
     user = await fetch_from_database()     # Waits 2 sec - handles other requests
@@ -177,6 +193,7 @@ async def get_data(request):
 ```
 
 **Difference:**
+
 - **Sync:** 1 request at a time, waits idle
 - **Async:** Many requests at once, no idle waiting
 
@@ -204,6 +221,7 @@ deactivate
 ```
 
 **Analogy:**
+
 - `myenv/` or `env/` → like `node_modules` (stores packages locally)
 - `requirements.txt` → like `package.json` (lists dependencies)
 
@@ -226,11 +244,13 @@ python -m venv env
 env\Scripts\activate
 pip install -r requirements.txt
 ```
+
 ---
 
 ## Client-Server Communication: The Basics
 
 ### Server Types
+
 - **File Server** → sends files in their original format (PDF, images, videos, etc.) via FTP/FTPS
 - **Web Server** → sends data in HTML/JSON via HTTP/HTTPS
 - **Mail Server** → handles emails
@@ -260,6 +280,7 @@ This standardization ensures **unified communication** regardless of language or
 ```bash
 uvicorn main:app --reload
 ```
+
 - `main` = your Python file (main.py)
 - `app` = FastAPI instance variable
 - `--reload` = auto-restart on code changes
@@ -271,6 +292,7 @@ uvicorn main:app --reload
 **Pydantic** is a Python package for data validation and conversion.
 
 When you call `Product(...)`, Pydantic's **auto-generated `__init__`** runs:
+
 1. Validates input data using type hints
 2. Converts data to correct types
 3. Creates an instance if valid, otherwise raises `ValidationError`
@@ -287,6 +309,7 @@ When you call `Product(...)`, Pydantic's **auto-generated `__init__`** runs:
 - **FastAPI comes with Swagger built-in** — no configuration needed!
 
 **Why use Swagger over Postman?**
+
 - Swagger provides **more interactive documentation** — anyone can test the API directly from the docs without installing anything
 - Postman requires installation and manual request setup
 
@@ -305,20 +328,22 @@ The file is just source code (not connected to RAM)
 You need to explicitly save RAM → File
 
 To save RAM state to file so that it's stored permanently we use .json files
+
 ```python
 def add_product(product: Product):
     products.append(product)        # Step 1: Add to RAM
-    
+
     # Step 2: Save RAM → File
     with open("products.json", "w") as f:  # Open file for Writing
         json.dump(products, f)              # Dump (write) RAM data into file
-    
+
     return products
 ```
 
 To save to file: You MUST explicitly write it using open() and json.dump()
 
 What json.dump() does:
+
 - Takes data from RAM (products list)
 - Converts it to JSON text format
 - Writes it to the file (products.json)
@@ -341,11 +366,14 @@ The reason we don't see the updated list in the source code is because the sourc
 The running process exists in RAM with its own state. If we want to see changes reflected in the source code file itself, we have to explicitly write to that file while the process is running. It's not automatic — just because the running entity came from the source code doesn't mean it will update the source file. The source code and the running process are completely separate. Only if the running process explicitly writes to the source code file will we see changes there.
 
 ### type hints
+
 So in case of Python, type hints are ignored at compile and runtime — they're used to tell what developers expect and for IDE support, but not enforced. In case of TypeScript, it enforces at compile time.
 But in case of FastAPI, it uses Pydantic which reads type hints and enforces validation at runtime, so in that case it strictly checks and throws error if it gets something which is not defined.
 
 ### ORM
+
 When we define a class in JS/Python that maps to a table/collection:
+
 - Class name maps to table/collection name
 - The type of each field inside the class maps to each column type of that table (or field type in a document)
 - Each instance (object) of that class maps to each row of that table (or document in a collection)
@@ -355,6 +383,7 @@ So we're connecting objects and relations (tables) by mapping everything in that
 We need this because when working with Python/JS, we'd have to manually convert class objects to SQL queries (or MongoDB queries), which is cumbersome, very error-prone, complex, and difficult to maintain since two different languages exist in one file. That's why these tools exist — they give us functions we can call, and behind the scenes those queries are generated and executed. We just write code in Python/JS. This is why ORMs and ODMs exist.
 
 So these ODM/ORM tools let us:
+
 - Define models (classes) for collections/tables
 - Validate data automatically
 - Query and update documents/rows using Python/JS syntax instead of raw MongoDB/SQL queries
@@ -374,7 +403,7 @@ Mongoengine or Motor (NoSQL - MongoDB ODM) → works only with Python.
 Prisma (SQL/NoSQL ORM) → works only with JavaScript/TypeScript.
 SQLAlchemy (SQL ORM) → works only with Python.
 
-### autocommit && autoflush 
+### autocommit && autoflush
 
 session = sessionLocal()
 
@@ -386,7 +415,7 @@ session.add(user1)
 session.add(user2)
 session.add(user3)
 
-# NOW you want to query: How many users are in the database?
+### NOW you want to query: How many users are in the database?
 
 **autocommit=False && autoflush=True:** Changes are temporarily sent to DB during queries (visible only in this session, count=110), but not permanent until `commit()` — other sessions see count=100.
 
@@ -413,6 +442,7 @@ print(f"Count: {count}")
 ---
 
 ### **Case 1: autocommit=False, autoflush=True**
+
 ```python
 What happens:
 1. session.add(user1) → Stays in memory
@@ -431,6 +461,7 @@ Database calls: 3 INSERT queries + 1 COUNT query = 4 database operations
 ---
 
 ### **Case 2: autocommit=False, autoflush=False**
+
 ```python
 What happens:
 1. session.add(user1) → Stays in memory
@@ -445,6 +476,12 @@ Result: Count = (original users only, NO new users counted)
 Database calls: 1 COUNT query = 1 database operation
 ```
 
+## sessionmaker
+
+sessionmaker is a class
+sessionLocal = sessionmaker(...) creates an instance of sessionmaker, BUT this instance itself is also a callable class.
+db = sessionLocal() calls that callable session class to create an actual session instance which we use to interact with the database.
+
 ### database_models.Base.metadata.create_all(bind=engine)
 
 create_all() is smart — it checks if the table already exists in the database. If the table exists, it does nothing. If the table doesn't exist, it creates it. So restarting the server won't duplicate tables.
@@ -458,3 +495,69 @@ Base.metadata contains all the information about ALL the tables (models) you def
 create_all(bind=engine) takes all that metadata and generates the SQL CREATE TABLE statements
 It executes those statements on the database (using the engine) to create the actual tables
 But it only creates tables that don't already exist
+
+### db
+
+```python
+
+def init_db():
+    db = sessionLocal()
+
+    # Count existing products in the database
+    count = db.query(database_models.Product).count()
+
+    if count == 0:
+        for product in products:
+            # Convert Pydantic model to SQLAlchemy model and add to session
+            db.add(database_models.Product(**product.model_dump()))
+
+        # Commit all changes to the database permanently
+        db.commit()
+
+    db.close()
+
+
+# product.model_dump() => converts Pydantic model object to dictionary
+# ** unpacks the dictionary into keyword arguments (key=value pairs)
+# database_models.Product(**dict) => creates SQLAlchemy Product object from those key-value pairs
+init_db()
+
+# ** spreads out a dictionary into function/constructor arguments, so you don't have to manually type each key=value pair.
+
+# product.model_dump()  # Returns: {"id": 1, "name": "Phone", "price": 699.99, ...}
+
+# database_models.Product(**product.model_dump())
+# # Becomes:
+# database_models.Product(id=1, name="Phone", price=699.99, ...)
+```
+
+### yield in python
+
+We need an extra method like `next()` to work with `yield`. It's like a `return` statement, but instead of returning and exiting the function, it returns a value and pauses the function execution. The catch is, after returning, the function call is paused. When we call `next()` one more time, the function resumes execution until the next `yield`. If there is no more `yield` and we hit the end of the function (closing `}`) or a `return` statement, then the function execution is permanently finished. Now calling `next()` will raise a `StopIteration` exception.
+
+
+### Dependency Injection
+If any route function needs a value (like a database session), instead of creating it directly inside the function or manually calling a function to get it, we can ask FastAPI to provide it for us. FastAPI will automatically call the dependency function, get the value, and pass it as a parameter to our route function.
+
+Ex:
+```python
+def get_db():
+    db = sessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+@app.get("/products")
+def get_all_products(db: Session = Depends(get_db)):
+    db_products = db.query(database_models.Product).all()
+    return db_products
+```
+
+Here `db: Session` is the normal type annotation — whatever parameter we pass in a controller, we give its type so FastAPI can validate it at runtime. But `= Depends(get_db)` tells FastAPI: "Listen, I depend on this function for this object." So FastAPI calls `get_db()` and injects the returned object as `db` whenever this controller is requested.
+
+**How it works:**
+FastAPI calls `get_db()`, which runs until `yield db` and pauses. FastAPI injects that `db` object into `get_all_products()` parameter, so `get_all_products()` continues its execution. FastAPI does NOT go back to `get_db()` immediately after injecting `db`. It waits until `get_all_products()` completely finishes, THEN it goes back to `get_db()` and runs the rest of the code (the `finally` block) automatically.
+
+**Why use dependency injection over manual function calls?**
+If we manually call `get_db()`, we'd have to remember to use `next()` since the function execution is paused after `yield`. But with dependency injection, all of this is handled automatically by FastAPI — no extra code, no manual `next()` calls, nothing. We just declare the dependency and FastAPI handles everything on behalf of us. This way we can reuse the same session management multiple times, and managing sessions becomes easy and consistent across all routes.
