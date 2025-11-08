@@ -662,6 +662,16 @@ fetch(`/product`, {
     })
 })
 ```
+If we send both id and product data in one request body, but the controller expects two separate parameters, does FastAPI automatically extract and map them, or do we need to do it manually?
+
+FastAPI receives the entire JSON body, then automatically extracts and maps each field to the corresponding parameter:
+
+id: 5 → goes to id parameter
+name, price, etc. → goes to product parameter (remaining fields form the Pydantic model)
+
+FastAPI is smart enough to separate the JSON body into multiple parameters based on their names and types. No manual extraction needed!
+
+
 Method 2: Include it in your Pydantic model (Best Practice)
 ```python
 class Product(BaseModel):
