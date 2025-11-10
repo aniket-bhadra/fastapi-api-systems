@@ -354,6 +354,10 @@ If we don't use async/await, even if we use ASGI, the concurrent request handlin
 WSGI/ASGI is NOT middleware. It's a specification (just rules/contract) that is built into the server.
 There is no separate middleware layer. The server itself does the conversion (HTTP request → Python dict, Python response → HTTP response) following the WSGI/ASGI specification rules. No middleware, Server directly converts and calls your app
 
+so 
+When you use an ASGI server like Uvicorn with FastAPI and use async/await in your route handlers, concurrent requests are handled automatically. You don't need to do anything extra - Uvicorn handles multiple requests concurrently using async I/O under the hood.
+Just make sure your route handler is defined as async def and you use await for I/O operations (like database calls, HTTP requests, etc.).
+
 ## Virtual Environments: Isolating Dependencies
 
 If you run `pip install fastapi` directly, it installs **globally** — meaning every project on your PC gets that version. This creates conflicts.
@@ -870,3 +874,30 @@ fetch(`/product`, {
 If we use Body(embed=True), Pydantic model comes from body with a wrapper key (the wrapper key name = parameter name)
 
 FastAPI is smart — it looks at the route definition and parameter types to automatically figure out where each parameter should come from. No manual configuration needed!
+
+
+### response model
+In FastAPI, Pydantic models are required to validate and convert request/response data types. For database operations with an ORM, we need separate SQLAlchemy models since Pydantic models cannot be understood by the ORM — the ORM needs its own model types.
+
+Even though APIs return JSON, Pydantic models are also needed to validate the response so that we can ensure the route function returns the correct structure. This prevents accidentally returning wrong fields or types and exposing sensitive fields (like passwords). It also ensures that the function returns correct types so that JSON conversion by FastAPI is error-free, since certain types cannot be converted to JSON easily by FastAPI (for example, `datetime` objects, `Decimal`, `set`, or custom classes need proper serialization).
+
+**Example:** Suppose the return type must have `userId` which is type `int`, and we return `{"user_id": "abc"}`. Without response validation, this will be converted to JSON by FastAPI automatically and sent to the user with no error. But if we validate the response with a Pydantic model:
+
+```python
+@app.get("/user", response_model=UserResponse)
+def get_user():
+    return {"user_id": "abc"}  # FastAPI catches this type error before sending!
+```
+
+FastAPI will raise a validation error because `"abc"` is a string, not an integer, preventing the incorrect response from reaching the client.
+
+**So response validation = catches bugs before they reach clients, ensures API contract consistency, and handles proper JSON serialization of complex types.**
+
+
+When does FastAPI start the event loop - at server start or when it sees async keyword?
+At server start!
+When you run uvicorn main:app, FastAPI (through Uvicorn) starts the event loop immediately and keeps it running. Then:
+
+
+If route is async def → FastAPI runs it in the event loop (non-blocking)
+If route is regular def → FastAPI runs it in a thread pool (to avoid blocking the event loop)
