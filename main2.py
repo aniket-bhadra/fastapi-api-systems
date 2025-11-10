@@ -38,3 +38,26 @@ async def create_user(user: UserOut):
 @app.get("/get")
 async def get_id(id: int = None):
     return id
+
+
+# how to access cookie from client & make it optional
+@app.get("/users")
+async def get_info(info: Annotated[str | None, Cookie()] = None):
+    if info:
+        return info + " cookie send from server"
+    return "no cookie found"
+
+
+# access custom req header
+
+
+@app.get("/headers")
+async def get_info(info: Annotated[str | None, Header()] = None):
+    if info:
+        return info + " header send from server"
+    return "no header found"
+
+
+@app.get("/allHeaders")
+async def get_all_headers(req: Request):
+    return req.headers

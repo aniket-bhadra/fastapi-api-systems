@@ -901,3 +901,16 @@ When you run uvicorn main:app, FastAPI (through Uvicorn) starts the event loop i
 
 If route is async def → FastAPI runs it in the event loop (non-blocking)
 If route is regular def → FastAPI runs it in a thread pool (to avoid blocking the event loop)
+
+## What is Annotated?
+Annotated is just a wrapper that lets you add extra instructions to a variable's type
+Think of it like putting a sticky note on a variable that says "hey, this variable needs special handling!"
+
+```python
+def get_info(info: Annotated[str, Header()]):
+    pass
+```
+str = the type (it's a string)
+Header() = extra instruction (get this from HTTP headers)
+
+Typing means telling Python what type of data a variable should be. A typing feature is just a tool Python gives you to describe types better. Annotated is one such tool - it lets you say "this is a string, AND here's extra info about it."
