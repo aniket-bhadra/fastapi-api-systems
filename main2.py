@@ -1,4 +1,4 @@
-from fastapi import FastAPI, status, Cookie, Header, Request, Form
+from fastapi import FastAPI, status, Cookie, Header, Request, Form, HTTPException
 from pydantic import BaseModel
 from typing import Annotated
 
@@ -91,3 +91,22 @@ async def validator(req: Request, call_next):
 async def testing():
     print("inside testing")
     return "tested tested"
+
+
+@app.get("/user/{user_id}")
+async def get_user(user_id: int):
+    if user_id >= 5:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="user not found"
+        )
+    return {"user": f"hi {user_id}, how are you?"}
+
+
+@app.get("/players/{id}", tags=["players"])
+def get_player(id: int):
+    return {"player_id": id}
+
+
+@app.get("/players/special", tags=["players"])
+def special_player():
+    return {"message": "hi player"}

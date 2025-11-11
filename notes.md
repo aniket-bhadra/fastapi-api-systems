@@ -1108,3 +1108,7 @@ async def home(req: Request):
     return templates.TemplateResponse("index.html", {"request": req, "data": data})
 ```
 now we can access this data and request inside the index.html
+
+## orders in fastapi
+When you have both static and dynamic routes with the same prefix (like /players/special and /players/{id}), always declare the static route first in FastAPI.
+If the dynamic one is above, FastAPI will match /players/special as {id="special"}, skipping the static route.
