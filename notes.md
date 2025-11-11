@@ -358,6 +358,15 @@ so
 When you use an ASGI server like Uvicorn with FastAPI and use async/await in your route handlers, concurrent requests are handled automatically. You don't need to do anything extra - Uvicorn handles multiple requests concurrently using async I/O under the hood.
 Just make sure your route handler is defined as async def and you use await for I/O operations (like database calls, HTTP requests, etc.).
 
+so,
+In FastAPI, it only works with ASGI servers which support asynchronous request-response, and FastAPI also supports asynchronous request-response - this is why it's faster.
+
+In Django, it supports both ASGI and WSGI. So in Django, if we use async/await but use a WSGI server, then nothing will happen since WSGI servers do not support asynchronous request-response - the WSGI server will just block and wait, turning your async code back into synchronous execution, so you won't get any async benefits.
+
+But if we use an ASGI server, even in that case it will not be as fast as FastAPI because Django is built for synchronous request-response - async was added later so it is not as optimized as FastAPI.
+
+So for asynchronous request-response to work, both the server and application layer must support it. If one supports it but the other does not, then it will not work.
+
 ## Virtual Environments: Isolating Dependencies
 
 If you run `pip install fastapi` directly, it installs **globally** — meaning every project on your PC gets that version. This creates conflicts.
@@ -1079,3 +1088,23 @@ Define two FastAPI apps: public routes go in the main app, protected routes go i
 - **Option 1** (Middleware): Simple, but messy if you have many protected routes
 - **Option 2** (Dependency): **BEST** - Clean, reusable, FastAPI way
 - **Option 3** (Sub-app): Good when you have many protected routes grouped together
+
+## templates
+FastAPI only comes with the integration layer (Jinja2Templates class) built-in. But the actual Jinja2 templating engine itself is NOT included - you have to install it separately
+
+```python
+from fastapi import FastAPI, Request
+from fastapi.templating import Jinja2Templates
+from fastapi.responses import HTMLResponse
+
+app = FastAPI()
+templates = Jinja2Templates(directory="template")
+
+data = ["rohit", "virat", "Hardik"]
+
+
+@app.get("/", response_class=HTMLResponse)
+async def home(req: Request):
+    return templates.TemplateResponse("index.html", {"request": req, "data": data})
+```
+now we can access this data and request inside the index.html
