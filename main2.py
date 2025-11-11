@@ -1,4 +1,4 @@
-from fastapi import FastAPI, status, Cookie, Header, Request
+from fastapi import FastAPI, status, Cookie, Header, Request, Form
 from pydantic import BaseModel
 from typing import Annotated
 
@@ -61,3 +61,29 @@ async def get_info(info: Annotated[str | None, Header()] = None):
 @app.get("/allHeaders")
 async def get_all_headers(req: Request):
     return req.headers
+
+
+# handle formdata
+# @app.post("/login")
+# async def login(username: Annotated[str, Form()], password: Annotated[str, Form()]):
+#     return f"hi {username} welcome!! your password started with {password[0]}****"
+
+
+@app.get("/allHeaders")
+async def get_all_headers(req: Request):
+    return req.headers
+
+## middleware
+@app.middleware("http")
+async def validator(req: Request, call_next):
+    print("middleware executing before req")
+    res = await call_next(req)
+    print("after req, middleware execution")
+    return res
+
+
+@app.get("/testing")
+async def testing():
+    print("inside testing")
+    return "tested tested"
+
