@@ -2,7 +2,11 @@ from fastapi import FastAPI, status, Cookie, Header, Request, Form
 from pydantic import BaseModel
 from typing import Annotated
 
+from admin.routers import router as admin_routers
+
 app = FastAPI()
+
+app.include_router(admin_routers, prefix="/admin", tags=["Admin"])
 
 
 class UserINDB(BaseModel):
@@ -73,6 +77,7 @@ async def get_all_headers(req: Request):
 async def get_all_headers(req: Request):
     return req.headers
 
+
 ## middleware
 @app.middleware("http")
 async def validator(req: Request, call_next):
@@ -86,4 +91,3 @@ async def validator(req: Request, call_next):
 async def testing():
     print("inside testing")
     return "tested tested"
-
