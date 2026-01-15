@@ -2,9 +2,14 @@ from fastapi import FastAPI, Depends
 from models import Product
 from database import sessionLocal, engine
 import database_models
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware, allow_origins=["http://localhost:3000"], allow_methods=["*"]
+)
 
 # create_all() is smart — it checks if the table already exists in the database. If the table exists, it does nothing. If the table doesn't exist, it creates it. So restarting the server won't duplicate tables.
 
