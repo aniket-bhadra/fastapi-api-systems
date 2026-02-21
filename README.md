@@ -1,4 +1,44 @@
 # FastAPI Setup & Concepts Guide
+
+## Table of Contents
+1. [Why FastAPI Needs a Separate Server](#why-fastapi-needs-a-separate-server)
+   - [Web Server Architecture: 3-Layer System](#web-server-architecture-3-layer-system)
+   - [What Actually Happens (ASGI Flow)](#what-actually-happens)
+   - [Framework Comparison](#framework-comparison)
+2. [Synchronous vs Asynchronous](#synchronous-vs-asynchronous)
+   - [ASGI vs WSGI Request Flow](#request-flow-asgi-vs-wsgi)
+   - [Why ASGI is Faster](#why-asgi-is-faster)
+3. [Virtual Environments](#virtual-environments-isolating-dependencies)
+4. [Managing Dependencies with requirements.txt](#managing-dependencies-with-requirementstxt)
+5. [Client-Server Communication](#client-server-communication-the-basics)
+6. [REST APIs: How Data Flows](#rest-apis-how-data-flows)
+7. [Running FastAPI with Uvicorn](#running-fastapi-with-uvicorn)
+8. [Pydantic: Data Validation & Conversion](#pydantic-data-validation--conversion)
+9. [Swagger: Built-in API Documentation](#swagger-built-in-api-documentation)
+   - [RAM vs File: Why Data Doesn't Persist](#why-does-the-5th-product-show-up-in-swagger-after-post-but-not-in-my-python-file-and-how-does-using-json-solve-this-problem)
+10. [Type Hints in FastAPI](#type-hints)
+11. [ORM & ODM](#orm)
+    - [SQLAlchemy Setup](#to-work-with-fastapi-and-postgresql-we-need-a-postgresql-driver-and-optionally-sqlalchemy)
+    - [autocommit & autoflush](#autocommit--autoflush)
+    - [sessionmaker](#sessionmaker)
+    - [create_all()](#database_modelsbasemetadatacreate_allbindengine)
+    - [model_dump() & db.add()](#db)
+12. [Yield in Python](#yield-in-python)
+13. [Dependency Injection](#dependency-injection)
+    - [Why Use DI Over Manual Calls](#why-use-dependency-injection-over-manual-function-calls)
+    - [Pydantic vs SQLAlchemy Models](#if-the-client-is-sending-json-which-is-already-key-value-pairs-like-a-dictionary-why-cant-we-directly-unpack-that-json-response-why-do-we-need-the-conversion-using-model_dump)
+14. [FastAPI Parameter Detection](#fastapis-parameter-detection)
+    - [Forcing Body Parameters](#now-what-if-we-wanted-make-sure-this-parameter-must-come-from-body)
+15. [Response Model](#response-model)
+16. [Annotated](#what-is-annotated)
+17. [Middleware](#middleware)
+    - [Excluding Specific Endpoints](#can-you-exclude-specific-endpoints-from-middleware)
+    - [Applying Middleware to Specific Paths](#can-we-apply-middleware-to-only-specific-paths)
+18. [Templates](#templates)
+19. [Route Order in FastAPI](#orders-in-fastapi)
+
+---
+
 ## Why FastAPI Needs a Separate Server
 
 ### Web Server Architecture: 3-Layer System
@@ -1112,3 +1152,9 @@ now we can access this data and request inside the index.html
 ## orders in fastapi
 When you have both static and dynamic routes with the same prefix (like /players/special and /players/{id}), always declare the static route first in FastAPI.
 If the dynamic one is above, FastAPI will match /players/special as {id="special"}, skipping the static route.
+
+
+
+
+
+
