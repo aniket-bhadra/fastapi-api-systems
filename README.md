@@ -26,7 +26,7 @@
 12. [Yield in Python](#yield-in-python)
 13. [Dependency Injection](#dependency-injection)
     - [Why Use DI Over Manual Calls](#why-use-dependency-injection-over-manual-function-calls)
-    - [Pydantic vs SQLAlchemy Models](#if-the-client-is-sending-json-which-is-already-key-value-pairs-like-a-dictionary-why-cant-we-directly-unpack-that-json-response-why-do-we-need-the-conversion-using-model_dump)
+    - [Pydantic vs SQLAlchemy Models](#pydantic-vs-sqlalchemy-models)
 14. [FastAPI Parameter Detection](#fastapis-parameter-detection)
     - [Forcing Body Parameters](#now-what-if-we-wanted-make-sure-this-parameter-must-come-from-body)
 15. [Response Model](#response-model)
@@ -765,11 +765,11 @@ Here `db: Session` is the normal type annotation — whatever parameter we pass 
 **How it works:**
 FastAPI calls `get_db()`, which runs until `yield db` and pauses. FastAPI injects that `db` object into `get_all_products()` parameter, so `get_all_products()` continues its execution. FastAPI does NOT go back to `get_db()` immediately after injecting `db`. It waits until `get_all_products()` completely finishes, THEN it goes back to `get_db()` and runs the rest of the code (the `finally` block) automatically.
 
-**Why use dependency injection over manual function calls?**
+### Why Use Dependency Injection Over Manual Function Calls
 If we manually call `get_db()`, we'd have to remember to use `next()` since the function execution is paused after `yield`. But with dependency injection, all of this is handled automatically by FastAPI — no extra code, no manual `next()` calls, nothing. We just declare the dependency and FastAPI handles everything on behalf of us. This way we can reuse the same session management multiple times, and managing sessions becomes easy and consistent across all routes.
 
-
-### If the client is sending JSON (which is already key-value pairs like a dictionary), why can't we directly unpack that JSON response? Why do we need the conversion using model_dump()? Because model_dump() converts to a dictionary, but we're already getting a dictionary as JSON, right?
+### Pydantic vs SQLAlchemy Models
+If the client is sending JSON (which is already key-value pairs like a dictionary), why can't we directly unpack that JSON response? Why do we need the conversion using model_dump()? Because model_dump() converts to a dictionary, but we're already getting a dictionary as JSON, right?
 
 **Answer:**
 
