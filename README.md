@@ -137,7 +137,7 @@ _but_
 - Router calls the appropriate path operation function
 - Function returns Python objects - FastAPI automatically serializes to JSON (using Pydantic / `jsonable_encoder`)
 
-So no manual conversion like `req.json()` in Node.js or `JsonResponse` in Django. Just return Python object from each function → FastAPI automatically converts to JSON & hands over this JSON to ASGI → ASGI converts to HTTP response and hands over to server → server sends to user
+So no  manual conversion like `req.json()` in Node.js or `JsonResponse` in Django. Just return Python object from each function → FastAPI automatically converts to JSON & hands over this JSON to ASGI → ASGI converts to HTTP response and hands over to server → server sends to user
 
 But ASGI gives a Python dictionary, so why does FastAPI need to "convert request data to Python types"?
 
